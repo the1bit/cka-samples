@@ -79,3 +79,4 @@ helm upgrade argocd argo/argo-cd \
 - [ArgoCD CRDs Info](https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/)
 - [Helm Chart values](https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd)
 - [ArgoCD install options](https://argo-cd.readthedocs.io/en/stable/getting_started/)
+- [ArgoCD on Artifact Hub](https://artifacthub.io/packages/helm/argo-cd-oci/argo-cd)
