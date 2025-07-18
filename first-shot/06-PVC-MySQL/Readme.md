@@ -65,3 +65,7 @@ kubectl rollout restart deployment mysql -n cka-pv
 kubectl get pods -n cka-mysql
 ```
 
+## Documentation
+
+- [PersistentVolumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+- [PersistentVolume Reclaim Policies](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming)
