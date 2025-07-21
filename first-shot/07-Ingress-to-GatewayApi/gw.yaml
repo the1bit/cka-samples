@@ -1,0 +1,40 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  annotations:
+    gateway.networking.k8s.io/generator: ingress2gateway-0.4.0
+  creationTimestamp: null
+  name: nginx
+  namespace: cka-gateway
+spec:
+  gatewayClassName: nginx
+  listeners:
+  - hostname: gateway.example.com
+    name: gateway-example-com-http
+    port: 80
+    protocol: HTTP
+status: {}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    gateway.networking.k8s.io/generator: ingress2gateway-0.4.0
+  creationTimestamp: null
+  name: apache-ingress-gateway-example-com
+  namespace: cka-gateway
+spec:
+  hostnames:
+  - gateway.example.com
+  parentRefs:
+  - name: nginx
+  rules:
+  - backendRefs:
+    - name: apache-service
+      port: 80
+    matches:
+    - path:
+        type: PathPrefix
+        value: /
+status:
+  parents: []

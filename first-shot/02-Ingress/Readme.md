@@ -12,6 +12,10 @@ Ingress manages external access to services in a cluster, typically HTTP. It pro
 - Ingress controller installed (e.g., NGINX Ingress Controller)
 
 
+## Modify local computer settings to access the Ingress
+
+To access the Ingress from your local computer, you need to modify your `/etc/hosts` file (Linux/Mac) or `C:\Windows\System32\drivers\etc\hosts` file (Windows) to map the Ingress hostnames to the IP address of your Ingress controller.
+
 ## Commands
 
 ```bash
