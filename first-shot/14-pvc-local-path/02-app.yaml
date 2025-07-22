@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app
+  namespace: cka-local-path
+spec:
+  containers:
+    - name: frontend
+      image: nginx
+      volumeMounts:
+        - mountPath: "/var/www/html"
+          name: html
+  volumes:
+    - name: html
+      persistentVolumeClaim:
+        claimName: local-path-pvc

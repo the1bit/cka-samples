@@ -18,6 +18,7 @@ This document contains questions I remember from the CKA exam for future referen
 13. Legacy app: add to built-in logging - sidecar
 14. New PVC, WatingForCustomer, rancher.io/local-path
 15. Nginx is configured via ConfigMap - update the Configmap to use TLS1.2
+16. Network was deleted. You must install a new network plugin (Calico or Flannel) and enable Ipv4, IPv6, and DNS.
 
 ---
 
