@@ -1,0 +1,11 @@
+certificaterequests.cert-manager.io
+certificates.cert-manager.io
+challenges.acme.cert-manager.io
+clusterissuers.cert-manager.io
+gatewayclasses.gateway.networking.k8s.io
+gateways.gateway.networking.k8s.io
+grpcroutes.gateway.networking.k8s.io
+httproutes.gateway.networking.k8s.io
+issuers.cert-manager.io
+orders.acme.cert-manager.io
+referencegrants.gateway.networking.k8s.io
