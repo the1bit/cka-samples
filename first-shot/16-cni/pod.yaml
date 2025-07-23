@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dualstack-test
+spec:
+  containers:
+  - name: test
+    image: ubuntu
+    command: ["sleep", "3600"]
+    securityContext:
+      privileged: true
