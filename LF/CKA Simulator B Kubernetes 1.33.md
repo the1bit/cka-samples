@@ -534,13 +534,89 @@ Start the kube-scheduler again and confirm it's running correctly by creating a 
 
 1. **Stop the kube-scheduler:**
 ```sh
-sudo systemctl stop kube-scheduler
+ls /etc/kubernetes/manifests/
+sudo mv /etc/kubernetes/manifests/kube-scheduler.yaml /root/kube-scheduler.yaml.bak
 ```
-
-_Result: Failed to stop kube-scheduler: Unit kube-scheduler.service not loaded_
 
 2. **Create the Pod `manual-schedule`:**
 ```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: manual-schedule
+spec:
+  containers:
+  - name: manual-schedule-container
+    image: httpd:2-alpine
+```
+
+3. **Apply the Pod manifest:**
+```sh
+kubectl apply -f manual-schedule.yaml
+```
+
+4. **Verify the Pod is not scheduled:**
+```sh
+kubectl get pods manual-schedule
+```
+
+_Result: Pod is in Pending state_
+
+5. **Add nodeName to Pod manifest to manually schedule it:**
+```yaml
+spec:
+  nodeName: cka5248
+```
+
+6. **Recreate the Pod with the updated manifest:**
+```sh
+kubectl delete pod manual-schedule
+kubectl apply -f manual-schedule.yaml
+```
+
+7. **Verify the Pod is running on cka5248:**
+```sh
+kubectl get pods manual-schedule -o wide
+```
+
+_Result: Pod is running on cka5248_
+
+8. **Start the kube-scheduler again:**
+```sh
+sudo mv /root/kube-scheduler.yaml.bak /etc/kubernetes/manifests/kube-scheduler.yaml
+```
+
+9. **Verify the kube-scheduler is running:**
+```sh 
+sudo systemctl status kubelet
+```
+
+_Result: kube-scheduler is active (running)_
+
+10. **Create the second Pod `manual-schedule2`:**
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: manual-schedule2
+spec:
+  containers:
+  - name: manual-schedule2
+    image: httpd:2-alpine
+```
+
+11. **Apply the second Pod manifest:**
+```sh
+kubectl apply -f manual-schedule2.yaml
+```
+
+12. **Verify the second Pod is running on cka5248-node1:**
+```sh
+kubectl get pods manual-schedule2 -o wide
+```
+
+_Result: Pod is running on cka5248-node1_
+
 
 ---
 Question 10:
