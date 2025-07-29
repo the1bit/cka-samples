@@ -377,10 +377,8 @@ _Result: cka1024 Ready ..._
 
 10. **Create the Pod `success` with kubectl command:**
 ```sh
-kubectl run success --image=nginx:1-alpine --restart=Never -n default
+kubectl run success --image=nginx:1-alpine
 ```
-
-
 
 ---
 Question 7:
@@ -390,6 +388,43 @@ You have been tasked to perform the following etcd operations:
 
 Run etcd --version and store the output at /opt/course/7/etcd-version
 Make a snapshot of etcd and save it at /opt/course/7/etcd-snapshot.db
+
+## Solution
+1. **Check the etcd version:**
+```sh
+etcd --version
+```
+
+_Result: Command 'etcd' not found, but can be installed with:_
+
+2. **Install etcd if not found:**
+```sh
+sudo apt update
+sudo apt install etcd
+```
+
+3. **Run etcd --version and save the output:**
+```sh
+etcd --version | tee /opt/course/7/etcd-version
+```
+
+4. **Make a snapshot of etcd:**
+```sh
+export ETCDCTL_API=3
+export ETCDCTL_CACERT=/etc/kubernetes/pki/etcd/ca.crt
+export ETCDCTL_CERT=/etc/kubernetes/pki/apiserver-etcd-client.crt
+export ETCDCTL_KEY=/etc/kubernetes/pki/apiserver-etcd-client.key
+export ETCDCTL_ENDPOINTS=https://127.0.0.1:2379
+
+etcdctl --endpoints=$ETCDCTL_ENDPOINTS snapshot save /opt/course/7/etcd-snapshot.db
+
+```
+
+5. **Verify the snapshot was created:**
+
+```sh
+ls -l /opt/course/7/etcd-snapshot.db
+```
 
 ---
 Question 8:
@@ -411,6 +446,78 @@ etcd: [TYPE]
 dns: [TYPE] [NAME]
 Choices of [TYPE] are: not-installed, process, static-pod, pod
 
+## Solution:
+
+1. **Check kubelet:**
+```sh
+systemctl status kubelet
+```
+_Result: Active: active (running)_
+_Value: kubelet: process_
+
+2. **Check kube-apiserver:**
+```sh
+ps aux | grep kube-apiserver
+```
+
+3. **Check kube-scheduler:**
+```sh
+ps aux | grep kube-scheduler
+```
+
+4. **Check kube-controller-manager:**
+```sh
+ps aux | grep kube-controller-manager
+```
+
+5. **Check etcd:**
+```sh
+ps aux | grep etcd
+```
+
+6. **Check DNS application:**
+```sh
+kubectl get pods -n kube-system -l k8s-app=kube-dns
+```
+
+7. **Find kube-apiserver type:**
+```sh
+ls /etc/kubernetes/manifests/
+```
+
+_Result: kube-apiserver.yaml_
+_Value: kube-apiserver: static-pod_
+
+8. **Find kube-scheduler type:**
+```sh
+ls /etc/kubernetes/manifests/
+``` 
+
+_Result: kube-scheduler.yaml_
+_Value: kube-scheduler: static-pod_
+
+9. **Find kube-controller-manager type:**
+```sh
+ls /etc/kubernetes/manifests/
+```
+_Result: kube-controller-manager.yaml_
+_Value: kube-controller-manager: static-pod_
+
+10. **Find etcd type:**
+```sh
+ls /etc/kubernetes/manifests/
+```
+_Result: etcd.yaml_
+_Value: etcd: static-pod_
+
+11. **Find DNS type and name:**
+```sh
+kubectl get deployment -n kube-system
+```
+_Result: kube-dns_
+_Value: dns: pod coredns_
+
+
 ---
 Question 9:
 Solve this question on: ssh cka5248
@@ -422,6 +529,18 @@ Create a single Pod named manual-schedule of image httpd:2-alpine, confirm it's 
 Now you're the scheduler and have all its power, manually schedule that Pod on node cka5248. Make sure it's running.
 
 Start the kube-scheduler again and confirm it's running correctly by creating a second Pod named manual-schedule2 of image httpd:2-alpine and check if it's running on cka5248-node1.
+
+## Solution
+
+1. **Stop the kube-scheduler:**
+```sh
+sudo systemctl stop kube-scheduler
+```
+
+_Result: Failed to stop kube-scheduler: Unit kube-scheduler.service not loaded_
+
+2. **Create the Pod `manual-schedule`:**
+```yaml
 
 ---
 Question 10:
