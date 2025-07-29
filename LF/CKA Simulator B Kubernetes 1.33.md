@@ -52,7 +52,7 @@ Ensure the Deployment works with the updated values.
   ```
 4. **Verify** inside a Pod:
   ```sh
-  kubectl exec -n lima-control <pod-name> -- nslookup $DNS_1
+  kubectl exec -n lima-control <pod-name> -- sh -c 'nslookup $DNS_1'
   ```
 
 Replace `<configmap-name>`, `<configmap-file>.yaml`, `<deployment-name>`, and `<pod-name>` with actual resource names.
@@ -92,6 +92,8 @@ spec:
           memory: "20Mi"
 ```
 
+
+
 ### 2. Verify the Static Pod is running
 
 ```sh
@@ -106,6 +108,8 @@ kind: Service
 metadata:
   name: static-pod-service
   namespace: default
+  labels:
+    app: my-static-pod
 spec:
   type: NodePort
   selector:
@@ -116,14 +120,6 @@ spec:
     - port: 80
       targetPort: 80
       nodePort: 30080 # Or omit for auto-assignment
-```
-
-Add the label to the Pod (edit the manifest):
-
-```yaml
-metadata:
-  labels:
-    app: my-static-pod
 ```
 
 Apply the Service:
@@ -171,6 +167,15 @@ On `cka5248-node1`, the kubelet certificates are typically found in `/var/lib/ku
 - **Client certificate:** `/var/lib/kubelet/pki/kubelet-client-current.pem`
 - **Server certificate:** `/var/lib/kubelet/pki/kubelet.crt`
 
+_Note: Run the following find command to locate the files if you have no clue about the path of these files:_
+
+```sh
+find / -name "kubelet.crt" 2>/dev/null
+find / -name "kubelet-client-current.pem" 2>/dev/null
+```
+
+
+
 ### 2. Extract Issuer and Extended Key Usage
 
 Run the following commands on `cka5248-node1`:
@@ -178,7 +183,7 @@ Run the following commands on `cka5248-node1`:
 ```sh
 # Kubelet Client Certificate
 echo "Kubelet Client Certificate:" > /opt/course/3/certificate-info.txt
-openssl x509 -in /var/lib/kubelet/pki/kubelet-client-current.pem -noout -issuer -ext extendedKeyUsage >> /opt/course/3/certificate-info.txt
+sudo openssl x509 -in /var/lib/kubelet/pki/kubelet-client-current.pem -noout -issuer -ext extendedKeyUsage >> /opt/course/3/certificate-info.txt
 
 # Kubelet Server Certificate
 echo -e "\nKubelet Server Certificate:" >> /opt/course/3/certificate-info.txt
@@ -207,6 +212,69 @@ Create a second Pod named am-i-ready of image nginx:1-alpine with label id: cros
 The already existing Service service-am-i-ready should now have that second Pod as endpoint
 Now the first Pod should be in ready state, check that
 
+## Solution
+
+1. Create the Pod `ready-if-service-ready`
+```yaml
+apiVersion: v1
+kind: Pod   
+metadata:
+  name: ready-if-service-ready
+  namespace: default
+spec:
+  containers:
+    - name: nginx-container 
+      image: nginx:1-alpine
+      livenessProbe:
+        exec:
+          command: ["true"]
+        initialDelaySeconds: 5
+        periodSeconds: 5
+      readinessProbe:
+        exec:
+          command: ["wget", "-T2", "-O-", "http://service-am-i-ready:80"]
+        initialDelaySeconds: 5
+        periodSeconds: 5
+```
+
+2. Apply the Pod manifest
+```sh
+kubectl apply -f ready-if-service-ready.yaml
+```
+
+_Note: Expected result: Readiness probe faiiled: command timeout: timed out after 1 s_
+
+3. Create the Pod `am-i-ready`
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: am-i-ready
+  namespace: default
+  labels:
+    id: cross-server-ready  
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx:1-alpine
+```
+
+4. Apply the Pod manifest
+```sh
+kubectl apply -f am-i-ready.yaml
+
+```
+
+5. Recreate ready-if-service-ready Pod to trigger readiness check
+```sh
+kubectl delete pod ready-if-service-ready
+kubectl apply -f ready-if-service-ready.yaml
+```
+
+6. Verify the readiness state
+```sh
+kubectl get pod ready-if-service-ready -n default
+```
 
 
 ---
@@ -220,6 +288,24 @@ Write a command into /opt/course/5/find_pods.sh which lists all Pods in all Name
 
 Write a command into /opt/course/5/find_pods_uid.sh which lists all Pods in all Namespaces sorted by field metadata.uid
 
+## Solution
+
+1. **Create the directory if it doesn't exist:**
+```sh
+mkdir -p /opt/course/5
+```
+
+2. **Create the script `find_pods.sh`:**
+```sh
+echo '#!/bin/bash' > /opt/course/5/find_pods.sh
+echo 'kubectl get pods --all-namespaces --sort-by=.metadata.creationTimestamp' >> /opt/course/5/find_pods.sh
+```
+
+3. **Create the script `find_pods_uid.sh`:**
+```sh
+echo '#!/bin/bash' > /opt/course/5/find_pods_uid.sh
+echo 'kubectl get pods --all-namespaces --sort-by=.metadata.uid' >> /opt/course/5/find_pods_uid.sh
+```
 
 ---
 Question 6:
@@ -233,6 +319,67 @@ Fix the kubelet and confirm that the node is available in Ready state.
 Create a Pod called success in default Namespace of image nginx:1-alpine.
 
 ℹ️ The node has no taints and can schedule Pods without additional tolerations
+
+## Solution
+
+1. **SSH into the controlplane node:**
+```sh
+ssh cka1024
+```
+
+2. **Check the kubelet status:**
+```sh
+sudo systemctl status kubelet
+```
+
+_Result: kubelet.service: Consumed 9.619s CPU time, 68.6M memory peak, 0B memory swap peak._
+
+3. **Restart the kubelet service:**
+```sh
+sudo systemctl restart kubelet
+```
+
+4. **Check the kubelet status again:**
+```sh
+sudo systemctl status kubelet
+```
+
+_Result: Main PID: 11649 (coed=exited, status=203/EXEC), CPU: 9ms_
+
+5. **Check path of kubelet binary:**
+```sh
+which kubelet
+```
+
+_Result: /usr/bin/kubelet_
+
+6. **Check kubelet path in configuration:**
+```sh
+cat /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+```
+
+_Result: ExecStart=/usr/local/bin/kubelet ..._
+
+7. **Fix the path in the kubelet service file manually:**
+
+8. **Reload then restart the systemd daemon:**
+```sh
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+```
+
+9. **Check the cluster node status:**
+```sh
+kubectl get nodes
+```
+
+_Result: cka1024 Ready ..._
+
+10. **Create the Pod `success` with kubectl command:**
+```sh
+kubectl run success --image=nginx:1-alpine --restart=Never -n default
+```
+
 
 
 ---
