@@ -35,6 +35,7 @@
    - Look for the `Resources` section in the pod description or deployment YAML.
    - Check the `Requests` and `Limits` for CPU and memory.
    - Check node resources to see if there are enough available resources:
+   
    ```bash
     kubectl top nodes
     ```
